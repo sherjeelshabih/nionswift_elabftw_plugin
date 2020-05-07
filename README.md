@@ -9,11 +9,9 @@ Once, the pull request is complete, this won't be needed.
 ### Requirements ###
 
 * Working Nionswift install
-* Elabapy - (https://github.com/shabihsherjeel/elabapy)
 
 ### Commands to install ###
 ```
-git clone https://github.com/shabihsherjeel/elabapy
 pip install elabapy
 
 git clone https://github.com/shabihsherjeel/nionswift_elabftw_plugin
