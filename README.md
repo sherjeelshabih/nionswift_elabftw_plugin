@@ -18,6 +18,13 @@ git clone https://github.com/shabihsherjeel/nionswift_elabftw_plugin
 pip install nionswift_elabftw_plugin
 ```
 
+### Updating to latest version ###
+```
+cd nionswift_elabftw_plugin
+
+git pull
+```
+
 ## Setup ##
 When you first run the plugin, it will ask you for the address and port for the ElabFTW server. That can be copied from your browser and pasted into the plugin in the following format:
 &lt;IP or URL>:&lt;PORT>
