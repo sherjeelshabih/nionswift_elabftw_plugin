@@ -64,7 +64,7 @@ class ElabFTWUIHandler:
                 def save_ip(ip):
                     with open(os.path.expanduser(self.users.settings_dir)+'/config.txt', 'a+') as f:
                         f.write('elabftw_ip_address='+ip+'\n')
-                self.__api.application.document_windows[0].show_get_string_message_box('ElabFTW Server Address', 'Enter elabftw IP address (xxx.xxx.xxx.xxx:port)', save_ip, accepted_text='Save')
+                self.__api.application.document_windows[0].show_get_string_message_box('ElabFTW Server Address', 'Enter elabftw URL', save_ip, accepted_text='Save')
                 return False
             return True
     def get_experiments_and_set(self):
@@ -77,7 +77,7 @@ class ElabFTWUIHandler:
         self.get_uploads_for_current_experiment()
 
     def switch_to_experiments_list(self):
-        self.elab_manager = elabapy.Manager(endpoint="https://"+self.config['elabftw_ip_address']+"/api/v1/", token=self.users.api_key)
+        self.elab_manager = elabapy.Manager(endpoint=self.config['elabftw_ip_address']+"/api/v1/", token=self.users.api_key)
         self.get_experiments_and_set()
 
     def logout_user_button_clicked(self, widget: Declarative.UIWidget):
