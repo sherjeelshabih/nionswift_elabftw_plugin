@@ -20,7 +20,7 @@ setup(
     install_requires=['elabapy','cryptography', 'nionutils', 'nionui', 'nionswift'],
     classifiers=[
     'Development Status :: 3 - Alpha',
-    'Intended Audience :: Researchers',
+    'Intended Audience :: Science/Research',
     'Programming Language :: Python :: 3',
     ],
     )
