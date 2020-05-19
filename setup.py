@@ -14,6 +14,7 @@ setup(
 
     license='GNU General Public License v3.0',
     url='https://github.com/shabihsherjeel/nionswift_elabftw_plugin',
+    download_url = 'https://github.com/shabihsherjeel/nionswift_elabftw_plugin/archive/0.1.tar.gz',
     keywords = ['NIONSWIFT', 'ELABFTW','ELN', 'PLUGIN'],
     packages=['nionswift_plugin.nionswift_elabftw_plugin'],
     install_requires=['elabapy','cryptography', 'nionutils', 'nionui', 'nionswift'],
