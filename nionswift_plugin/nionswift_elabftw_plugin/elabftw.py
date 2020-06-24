@@ -7,6 +7,7 @@ import sys
 from datetime import datetime
 import io
 import json
+from urllib.parse import urlparse
 
 
 from nion.utils import Event, Registry
@@ -47,24 +48,38 @@ class ElabFTWUIHandler:
     def close(self):
         ...
 
+    def ask_save_url(self, msg='Enter elabftw URL'):
+        def save_url(url):
+            with open(os.path.expanduser(self.users.settings_dir)+'/config.txt', 'a+') as f:
+                f.write('elabftw_url='+url+'\n')
+
+        def url_check(url):
+            #Checks and accounts for different formats the address could be given in
+            url_result = urlparse(url)
+            if(url_result.netloc==''): #If no valid netloc found
+                #ask again
+                self.ask_save_url('Incorrect URL. Please enter the URL from the address bar in your browser.')
+            else:
+                save_url(url_result.scheme+"://"+url_result.netloc)
+
+        self.__api.application.document_windows[0].show_get_string_message_box('ElabFTW Server Address', msg, url_check, accepted_text='Save')
+
     def setup_config(self):
         # Returns true if config already exists
         # Returns false to allow caller to interrupt action
-        # Get IP of Elab Server
+        # Get url of Elab Server
         self.config = {}
         with open(os.path.expanduser(self.users.settings_dir)+'/config.txt', 'a+') as f:
             f.seek(0)
             for prop in f:
                 prop = prop.rstrip('\n').split('=')
                 self.config[prop[0]] = prop[1]
+                print("ElabFTW plugin config directory: "+os.path.expanduser(self.users.settings_dir))
                 print(self.config)
 
             if len(self.config) < 1: #If no config is found
-                # Ask for and save IP address
-                def save_ip(ip):
-                    with open(os.path.expanduser(self.users.settings_dir)+'/config.txt', 'a+') as f:
-                        f.write('elabftw_ip_address='+ip+'\n')
-                self.__api.application.document_windows[0].show_get_string_message_box('ElabFTW Server Address', 'Enter elabftw URL', save_ip, accepted_text='Save')
+                # Ask for and save url address
+                self.ask_save_url()
                 return False
             return True
     def get_experiments_and_set(self):
@@ -77,7 +92,7 @@ class ElabFTWUIHandler:
         self.get_uploads_for_current_experiment()
 
     def switch_to_experiments_list(self):
-        self.elab_manager = elabapy.Manager(endpoint=self.config['elabftw_ip_address']+"/api/v1/", token=self.users.api_key)
+        self.elab_manager = elabapy.Manager(endpoint=self.config['elabftw_url']+"/api/v1/", token=self.users.api_key)
         self.get_experiments_and_set()
 
     def logout_user_button_clicked(self, widget: Declarative.UIWidget):
@@ -109,10 +124,10 @@ class ElabFTWUIHandler:
         def accepted_user_dialog(name):
             reject_colon(name)
             self.users.username = name
-            self.__api.application.document_windows[0].show_get_string_message_box('Create User', 'Choose a password', accepted_pass_dialog, accepted_text='Create')
+            self.__api.application.document_windows[0].show_get_string_message_box('Create User', 'Choose a local password', accepted_pass_dialog, accepted_text='Create')
 
         if self.setup_config():
-            self.__api.application.document_windows[0].show_get_string_message_box('Create User', 'Choose a username', accepted_user_dialog, accepted_text='Create')
+            self.__api.application.document_windows[0].show_get_string_message_box('Create User', 'Choose a local username', accepted_user_dialog, accepted_text='Create')
 
     def login_user_button_clicked(self, widget: Declarative.UIWidget):
 
