@@ -142,8 +142,9 @@ class ElabFTWUIHandler:
 
     def upload_meta_data(self):
         for dataitem in self.__api.application.document_controllers[0]._document_controller.selected_data_items:
-            dataitem.metadata['uuid'] = str(dataitem.uuid)
-            f = io.StringIO(json.dumps(dataitem.metadata, indent=3))
+            metadata = dataitem.metadata
+            metadata['uuid'] = str(dataitem.uuid)
+            f = io.StringIO(json.dumps(metadata, indent=3))
             f.name = dataitem.title+'.json'
             files = {'file': f}
             self.elab_manager.upload_to_experiment(self.current_experiment_id, files) # done uploading
