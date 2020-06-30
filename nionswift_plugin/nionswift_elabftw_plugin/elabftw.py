@@ -142,6 +142,7 @@ class ElabFTWUIHandler:
 
     def upload_meta_data(self):
         for dataitem in self.__api.application.document_controllers[0]._document_controller.selected_data_items:
+            dataitem.metadata['uuid'] = str(dataitem.uuid)
             f = io.StringIO(json.dumps(dataitem.metadata, indent=3))
             f.name = dataitem.title+'.json'
             files = {'file': f}
@@ -209,6 +210,7 @@ class ElabFTWUIHandler:
         self.undo_metadata = selected_dataitem.metadata # save metadata to undo
         metadata_elab = self.elab_manager.get_upload(self.current_upload_id)
         metadata_elab = json.loads(metadata_elab.decode('utf-8'))
+        del metadata_elab['uuid']
         ui_handler = MergeDataConfirmDialogUI().get_ui_handler(api_broker=PlugInManager.APIBroker(), document_controller=document_controller,event_loop=document_controller.event_loop, metadata_elab=metadata_elab, metadata_nion=selected_dataitem.metadata, dataitem=selected_dataitem, title='Merge metedata')
         finishes = list()
         dialog = Declarative.construct(document_controller.ui, document_controller, ui_handler.ui_view, ui_handler, finishes)
