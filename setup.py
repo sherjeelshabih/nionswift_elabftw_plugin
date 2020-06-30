@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name='nionswift_elabftw_plugin',
 
-    version='0.1.2.1',
+    version='0.1.2.2',
 
     description='A simple plugin to allow users to manage their ElabFTW experiments metadata through Nionswift.',
     long_description='',
@@ -14,7 +14,7 @@ setup(
 
     license='GNU General Public License v3.0',
     url='https://github.com/shabihsherjeel/nionswift_elabftw_plugin',
-    download_url = 'https://github.com/shabihsherjeel/nionswift_elabftw_plugin/archive/v0.1.2.1-alpha.tar.gz',
+    download_url = 'https://github.com/shabihsherjeel/nionswift_elabftw_plugin/archive/v0.1.2.2-alpha.tar.gz',
     keywords = ['NIONSWIFT', 'ELABFTW','ELN', 'PLUGIN'],
     packages=['nionswift_plugin.nionswift_elabftw_plugin'],
     install_requires=['elabapy','cryptography', 'nionutils', 'nionui', 'nionswift'],
