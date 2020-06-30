@@ -9,7 +9,7 @@ from cryptography.exceptions import InvalidTag
 from nion.ui import Dialog
 
 class Users():
-    settings_dir = "~/ElabFTW Nionswift Plugin"
+    settings_dir = "~/Nionswift ElabFTW Plugin"
 
     def __init__(self):
         self.username = ""
