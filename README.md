@@ -9,7 +9,7 @@ A simple plugin to allow users to manage their ElabFTW experiments metadata thro
 
 ### Commands to install ###
 ```
-pip install nionswift-elabftw-plugin
+pip install --user nionswift-elabftw-plugin
 ```
 
 ## Setup ##
