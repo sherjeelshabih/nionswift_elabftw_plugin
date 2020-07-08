@@ -1,10 +1,10 @@
-import typing
 import asyncio
+import typing
 
 from nion.swift.model import PlugInManager
-from nion.ui import Declarative
-from nion.utils import Event, Converter
 from nion.typeshed import API_1_0
+from nion.ui import Declarative
+from nion.utils import Converter, Event
 
 
 class ConflictCheckDialogUIHandler:

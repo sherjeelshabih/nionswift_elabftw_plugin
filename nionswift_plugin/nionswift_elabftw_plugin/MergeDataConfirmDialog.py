@@ -1,13 +1,14 @@
-import typing
 import asyncio
 import json
+import typing
 
 from nion.swift.model import PlugInManager
-from nion.ui import Declarative
-from nion.utils import Event, Converter
 from nion.typeshed import API_1_0
+from nion.ui import Declarative
+from nion.utils import Converter, Event
+from nionswift_plugin.nionswift_elabftw_plugin.ConflictCheckDialog import \
+    ConflictCheckDialogUI
 
-from nionswift_plugin.nionswift_elabftw_plugin.ConflictCheckDialog import ConflictCheckDialogUI
 
 class MergeDataConfirmDialogUIHandler:
     def __init__(self, api: API_1_0.API, ui_view: dict, document_controller=None, metadata_elab: dict=None, metadata_nion: dict=None, dataitem = None):

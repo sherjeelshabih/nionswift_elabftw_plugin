@@ -1,25 +1,24 @@
-import typing
-import gettext
 import asyncio
-import os
-import multiprocessing
-import sys
-from datetime import datetime
+import gettext
 import io
 import json
+import multiprocessing
+import os
+import sys
+import typing
+from datetime import datetime
 from urllib.parse import urlparse
-
-
-from nion.utils import Event, Registry
-from nion.ui import Declarative
-from nion.swift.model import PlugInManager
-from nion.swift import Workspace, DocumentController, Panel, Facade
-from nion.typeshed import API_1_0
 
 import elabapy
 
+from nion.swift import DocumentController, Facade, Panel, Workspace
+from nion.swift.model import PlugInManager
+from nion.typeshed import API_1_0
+from nion.ui import Declarative
+from nion.utils import Event, Registry
+from nionswift_plugin.nionswift_elabftw_plugin.MergeDataConfirmDialog import \
+    MergeDataConfirmDialogUI
 from nionswift_plugin.nionswift_elabftw_plugin.Users import Users
-from nionswift_plugin.nionswift_elabftw_plugin.MergeDataConfirmDialog import MergeDataConfirmDialogUI
 
 _ = gettext.gettext
 
