@@ -20,6 +20,8 @@ import elabapy
 
 from nionswift_plugin.nionswift_elabftw_plugin.Users import Users
 from nionswift_plugin.nionswift_elabftw_plugin.MergeDataConfirmDialog import MergeDataConfirmDialogUI
+from nionswift_plugin.nionswift_elabftw_plugin.AsyncRequestThread import AsyncRequestThread
+
 
 _ = gettext.gettext
 
@@ -82,14 +84,22 @@ class ElabFTWUIHandler:
                 self.ask_save_url()
                 return False
             return True
-    def get_experiments_and_set(self):
-        self.experiments = self.elab_manager.get_all_experiments()
-        self.experiments.append({'id':'-1', 'title':'<Create Experiment>'})
 
-        self.ui_stack.current_index = 1
-        self.experiments_combo.items = [x['title'] for x in self.experiments]
-        self.current_experiment_id = self.experiments[self.combo.current_index]['id']
-        self.get_uploads_for_current_experiment()
+    def get_experiments_and_set(self):
+
+        def set_experiments(experiments):
+            self.experiments = experiments
+            self.experiments.append({'id':'-1', 'title':'<Create Experiment>'})
+
+            self.ui_stack.current_index = 1
+            self.experiments_combo.items = [x['title'] for x in self.experiments]
+            self.current_experiment_id = self.experiments[self.combo.current_index]['id']
+            self.get_uploads_for_current_experiment()
+
+        # Get experiments using a QThread
+        # used to store a reference to the QThread while it runs.
+        # without the reference it will get destroyed before it finishes
+        self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.get_all_experiments, set_experiments)
 
     def switch_to_experiments_list(self):
         self.elab_manager = elabapy.Manager(endpoint=self.config['elabftw_url']+"/api/v1/", token=self.users.api_key)
@@ -147,13 +157,16 @@ class ElabFTWUIHandler:
             f = io.StringIO(json.dumps(metadata, indent=3))
             f.name = dataitem.title+'.json'
             files = {'file': f}
-            self.elab_manager.upload_to_experiment(self.current_experiment_id, files) # done uploading
+            self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.upload_to_experiment, None, self.current_experiment_id, files)
 
         # Reset current index matching with UI
-        self.experiments = self.elab_manager.get_all_experiments()
-        self.experiments.append({'id':'-1', 'title':'<Create Experiment>'})
-        self.combo.items = [x['title'] for x in self.experiments]
-        self.get_uploads_for_current_experiment()
+
+        def reset_ui_match(self, experiments):
+            self.experiments = experiments
+            self.experiments.append({'id':'-1', 'title':'<Create Experiment>'})
+            self.combo.items = [x['title'] for x in self.experiments]
+            self.get_uploads_for_current_experiment()
+        self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.get_all_experiments(), reset_ui_match)
 
     def on_combo_changed(self, widget: Declarative.UIWidget, current_index: int):
         self.users.username = self.combo.items[current_index]
@@ -170,15 +183,18 @@ class ElabFTWUIHandler:
         self.get_uploads_for_current_experiment()
 
     def get_uploads_for_current_experiment(self):
-        exp = self.elab_manager.get_experiment(self.current_experiment_id)
-        if exp['has_attachment'] == '1':
-            self.uploads = [{'real_name':x['real_name'],'id':x['id']} for x in exp['uploads']]
-            self.uploads_combo.items = [x['real_name'] for x in self.uploads]
-            self.current_upload_id = self.uploads[self.uploads_combo.current_index]['id']
-        else:
-            self.uploads = []
-            self.uploads_combo.items = ['No attachments found!']
-            self.current_upload_id = '-1'
+
+        def set_uploads_for_current_experiment(exp):
+            if exp['has_attachment'] == '1':
+                self.uploads = [{'real_name':x['real_name'],'id':x['id']} for x in exp['uploads']]
+                self.uploads_combo.items = [x['real_name'] for x in self.uploads]
+                self.current_upload_id = self.uploads[self.uploads_combo.current_index]['id']
+            else:
+                self.uploads = []
+                self.uploads_combo.items = ['No attachments found!']
+                self.current_upload_id = '-1'
+
+        self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.get_experiment, set_uploads_for_current_experiment, self.current_experiment_id)
 
     def submit_data_button_clicked(self, widget: Declarative.UIWidget):
         #check if one or more dataitem is selected. Otherwise give an error.
@@ -189,7 +205,7 @@ class ElabFTWUIHandler:
             def accepted_exp_dialog(experiment_name):
                 exp = self.elab_manager.create_experiment()
                 params = {'title':experiment_name, 'body':'', 'date':datetime.today().strftime('%Y%m%d')}
-                self.elab_manager.post_experiment(exp['id'], params)
+                self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.post_experiment, None, exp['id'], params)
                 self.current_experiment_id = exp['id'] # set the new experiments' id to upload to
                 self.upload_meta_data()
                 self.get_experiments_and_set()
@@ -209,18 +225,21 @@ class ElabFTWUIHandler:
         selected_dataitem = document_controller.selected_data_items[0]
         self.last_modified_dataitem = selected_dataitem
         self.undo_metadata = selected_dataitem.metadata # save metadata to undo
-        metadata_elab = self.elab_manager.get_upload(self.current_upload_id)
-        metadata_elab = json.loads(metadata_elab.decode('utf-8'))
-        del metadata_elab['uuid']
-        ui_handler = MergeDataConfirmDialogUI().get_ui_handler(api_broker=PlugInManager.APIBroker(), document_controller=document_controller,event_loop=document_controller.event_loop, metadata_elab=metadata_elab, metadata_nion=selected_dataitem.metadata, dataitem=selected_dataitem, title='Merge metedata')
-        finishes = list()
-        dialog = Declarative.construct(document_controller.ui, document_controller, ui_handler.ui_view, ui_handler, finishes)
-        for finish in finishes:
-           finish()
-        ui_handler._event_loop = document_controller.event_loop
 
-        ui_handler.request_close = dialog.request_close
-        dialog.show()
+        def show_metadata_diff(metadata_elab):
+            metadata_elab = json.loads(metadata_elab.decode('utf-8'))
+            if 'uuid' in metadata_elab:
+                del metadata_elab['uuid']
+            ui_handler = MergeDataConfirmDialogUI().get_ui_handler(api_broker=PlugInManager.APIBroker(), document_controller=document_controller,event_loop=document_controller.event_loop, metadata_elab=metadata_elab, metadata_nion=selected_dataitem.metadata, dataitem=selected_dataitem, title='Merge metedata')
+            finishes = list()
+            dialog = Declarative.construct(document_controller.ui, document_controller, ui_handler.ui_view, ui_handler, finishes)
+            for finish in finishes:
+               finish()
+            ui_handler._event_loop = document_controller.event_loop
+
+            ui_handler.request_close = dialog.request_close
+            dialog.show()
+        self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.get_upload, show_metadata_diff, self.current_upload_id)
 
     def undo_change_button_clicked(self, widget: Declarative.UIWidget):
         if self.undo_metadata != None:
