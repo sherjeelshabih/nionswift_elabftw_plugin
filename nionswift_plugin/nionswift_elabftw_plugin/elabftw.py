@@ -16,8 +16,8 @@ from nion.typeshed import API_1_0
 from nion.ui import Declarative
 from nion.utils import Event, Registry
 
-from nionswift_plugin.nionswift_elabftw_plugin.AsyncRequestThread import \
-    AsyncRequestThread
+from nionswift_plugin.nionswift_elabftw_plugin.AsyncRequestWrapper import \
+    AsyncRequestWrapper
 from nionswift_plugin.nionswift_elabftw_plugin.MergeDataConfirmDialog import \
     MergeDataConfirmDialogUI
 from nionswift_plugin.nionswift_elabftw_plugin.Users import Users
@@ -95,10 +95,7 @@ class ElabFTWUIHandler:
             self.current_experiment_id = self.experiments[self.combo.current_index]['id']
             self.get_uploads_for_current_experiment()
 
-        # Get experiments using a QThread
-        # used to store a reference to the QThread while it runs.
-        # without the reference it will get destroyed before it finishes
-        self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.get_all_experiments, set_experiments)
+        AsyncRequestWrapper.call_blocking_fn(self.elab_manager.get_all_experiments, self.__event_loop, set_experiments)
 
     def switch_to_experiments_list(self):
         self.elab_manager = elabapy.Manager(endpoint=self.config['elabftw_url']+"/api/v1/", token=self.users.api_key)
@@ -156,16 +153,16 @@ class ElabFTWUIHandler:
             f = io.StringIO(json.dumps(metadata, indent=3))
             f.name = dataitem.title+'.json'
             files = {'file': f}
-            self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.upload_to_experiment, None, self.current_experiment_id, files)
+            AsyncRequestWrapper.call_blocking_fn(self.elab_manager.upload_to_experiment, self.__event_loop, None, self.current_experiment_id, files)
 
         # Reset current index matching with UI
 
-        def reset_ui_match(self, experiments):
+        def reset_ui_match(experiments):
             self.experiments = experiments
             self.experiments.append({'id':'-1', 'title':'<Create Experiment>'})
-            self.combo.items = [x['title'] for x in self.experiments]
+            self.experiments_combo.items = [x['title'] for x in self.experiments]
             self.get_uploads_for_current_experiment()
-        self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.get_all_experiments(), reset_ui_match)
+        AsyncRequestWrapper.call_blocking_fn(self.elab_manager.get_all_experiments, self.__event_loop, reset_ui_match)
 
     def on_combo_changed(self, widget: Declarative.UIWidget, current_index: int):
         self.users.username = self.combo.items[current_index]
@@ -193,7 +190,7 @@ class ElabFTWUIHandler:
                 self.uploads_combo.items = ['No attachments found!']
                 self.current_upload_id = '-1'
 
-        self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.get_experiment, set_uploads_for_current_experiment, self.current_experiment_id)
+        AsyncRequestWrapper.call_blocking_fn(self.elab_manager.get_experiment, self.__event_loop, set_uploads_for_current_experiment, self.current_experiment_id)
 
     def submit_data_button_clicked(self, widget: Declarative.UIWidget):
         #check if one or more dataitem is selected. Otherwise give an error.
@@ -204,7 +201,7 @@ class ElabFTWUIHandler:
             def accepted_exp_dialog(experiment_name):
                 exp = self.elab_manager.create_experiment()
                 params = {'title':experiment_name, 'body':'', 'date':datetime.today().strftime('%Y%m%d')}
-                self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.post_experiment, None, exp['id'], params)
+                AsyncRequestWrapper.call_blocking_fn(self.elab_manager.post_experiment, self.__event_loop, None, exp['id'], params)
                 self.current_experiment_id = exp['id'] # set the new experiments' id to upload to
                 self.upload_meta_data()
                 self.get_experiments_and_set()
@@ -238,7 +235,7 @@ class ElabFTWUIHandler:
 
             ui_handler.request_close = dialog.request_close
             dialog.show()
-        self.asyncthread = AsyncRequestThread.asyncrequest(self.elab_manager.get_upload, show_metadata_diff, self.current_upload_id)
+        AsyncRequestWrapper.call_blocking_fn(self.elab_manager.get_upload, self.__event_loop, show_metadata_diff, self.current_upload_id)
 
     def undo_change_button_clicked(self, widget: Declarative.UIWidget):
         if self.undo_metadata != None:
